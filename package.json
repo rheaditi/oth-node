@@ -17,9 +17,14 @@
   },
   "homepage": "https://github.com/rheaditi/oth-node#readme",
   "dependencies": {
+    "async": "^2.0.0-rc.5",
+    "body-parser": "^1.15.1",
     "express": "^4.13.4",
     "firebase": "^3.0.2",
     "mongodb": "^2.1.19",
     "mongoose": "^4.4.19"
+  },
+  "devDependencies": {
+    "jshint": "^2.9.2"
   }
 }

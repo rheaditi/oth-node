@@ -1,6 +1,7 @@
 'use strict';
 
 var mongoose = require('mongoose');
+var waterfall = require("async/waterfall");
 
 /* Just to make it shorter =P */
 var Schema = mongoose.Schema;
@@ -12,15 +13,15 @@ var user = Schema({
 		type: String,
 		required: true
 	},
-	role: {
-		type: String,
-		required: true,
-		default: 'hunter'
-	}
 	username: {
 		type: String, 
 		required: true, 
 		unique: true
+	},
+	role: {
+		type: String,
+		required: true,
+		default: 'hunter'
 	},
 	affiliation: {
 		type: String,
@@ -31,7 +32,8 @@ var user = Schema({
 		default: Date.now
 	},
 	created: {
-		type: Date
+		type: Date,
+		required: true
 	},
 	level: {
 		levelNumber: {
@@ -44,8 +46,11 @@ var user = Schema({
 		}
 	},
 	flag: {
-		type: String,
-		default: 'TRUSTED'
+		status: {
+			type: String,
+			default: 'TRUSTED', //CHEATER ETC
+		},
+		incidents: [String]
 	}
 });
 
@@ -64,23 +69,43 @@ var question = Schema({
 		type: String
 	},
 	imageURL: {
-		type: 
-	}
+		type: String,
+		required: true,
+		unique: true
+	},
+	answers: [{
+		type: String,
+		unique: true
+	}] 
 });
 
-/* Methods */
+/* Schema Methods */
 
-user.methods.show = function(){
-	console.log('User Details:\nusername: '+this.username+'\naffiliation: '+this.affiliation+'\n');
+user.methods.logDetails = function(){
+	console.log("Logging details of user %s:\n\tusername: %s,\n\trole: %s,\n\tupdated: %s,\n\tcreated: %s,\n\tcurrent level: %s,\n\tflag: %s\n", this.name, this.username, this.role, this.updated, this.created, this.level.levelNumber, this.flag.status);
 }
+
+/* Helper Functions - Internal Use */
+
+var isUniqueQuestion = function(error, ){
+
+};
+
+/* Helper Functions - Exported */
+
+var newQuestion = function(inputQuestion) {
+	// validate question before creating a new object
+
+};
 
 /* Models */
 
 var User = Model('User', user);
-
+var Question = Model('Question', user);
 
 /* Exports */
 module.exports.Schema = {};
 module.exports.Schema.user = user;
 
 module.exports.User = User;
+module.exports.Question = Question;
