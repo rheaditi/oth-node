@@ -45,6 +45,28 @@ var db = require('./mongooseSchemas.js');
 var validate = require('./utils/validation.js');
 
 /* Backend APIS */
+app.get('/api/questions', function(request, response){
+	db.readAllQuestions(function(error,result){
+		if(error){
+			response.status(400).send(error.message);
+		}
+		else{
+			response.json(result);
+		}
+	});
+});
+
+app.get('/api/questions/:levelNumber', function(request, response){
+	db.readQuestionByLevelNumber(request.params.levelNumber, function(error,result){
+		if(error){
+			response.status(400).send(error.message);
+		}
+		else{
+			response.json(result);
+		}
+	});
+});
+
 app.post('/api/questions', function(request, response){
 	db.newQuestion(request.body, function(error, question){
 		if(error){
@@ -59,7 +81,9 @@ app.post('/api/questions', function(request, response){
 });
 
 app.delete('/api/questions', function(request, response){
-	response.status(403).send('Server does not support deleting all question resources. Too risky, man!');
+	response
+	.status(403)
+	.send('Server does not support deleting all question resources. Too risky, man!');
 });
 
 app.delete('/api/questions/:levelNumber', function(request, response){

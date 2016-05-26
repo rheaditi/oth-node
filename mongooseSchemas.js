@@ -271,6 +271,42 @@ var deleteQuestion = function(inputLevelNumber, apiCallback){
 	});
 };
 
+var readAllQuestions = function(apiCallback){
+	Question
+	.find({})
+	.sort({levelNumber:1})
+	.exec(function(error,result){
+		if(error){
+			apiCallback(error, null);
+			return;
+		}
+		else{
+			apiCallback(null, result);
+			return;
+		}
+	});
+};
+
+var readQuestionByLevelNumber = function(levelNumber, apiCallback){
+	Question
+	.findOne({ levelNumber: levelNumber })
+	.exec(function(error,result){
+		console.log(result);
+		if(error){
+			apiCallback(error, null);
+			return;
+		}
+		else if(!result){
+			apiCallback(new Error('Could not find question with that level number'), null);
+			return;
+		}
+		else{
+			apiCallback(null, result);
+			return;
+		}
+	});
+};
+
 /* Exports */
 module.exports.Schema = {};
 module.exports.Schema.user = user;
@@ -280,3 +316,15 @@ module.exports.Question = Question;
 
 module.exports.newQuestion = newQuestion;
 module.exports.deleteQuestion = deleteQuestion;
+module.exports.readAllQuestions = readAllQuestions;
+module.exports.readQuestionByLevelNumber = readQuestionByLevelNumber;
+
+
+
+
+
+
+
+
+
+
