@@ -2,6 +2,8 @@
 
 var mongoose = require('mongoose');
 var waterfall = require('async/waterfall');
+var map = require('async/map');
+
 var validate = require('./utils/validation.js');
 /* Just to make it shorter =P */
 var Schema = mongoose.Schema;
@@ -192,12 +194,50 @@ var newQuestion = function(inputQuestion, apiCallback) {
 };
 
 var deleteQuestion = function(inputLevelNumber, apiCallback){
-	var decrementByID = function(err,questionIDs){
-		console.log('got my IDS:\n\n');
-		console.log(questionIDs);
-		apiCallback(null, 'done');
-		return;
+	var decrementByID = function(questionIDs, deletedQuestion){
+		var responseResult = {
+			deleted: deletedQuestion,
+			modified: []
+		};
+		if(questionIDs.length === 0 ){
+			//nothing to delete.
+			apiCallback(null,responseResult);
+			return;
+		}
+		else{
+			map(questionIDs,
+				function iteratee(IDObject,callback){
+					//IDObject._id has the actual IDs to modify
+					Question.findByIdAndUpdate(
+						IDObject._id, //which ID
+						{ $inc: { levelNumber: -1 }}, //how to update
+						function (error, question) {
+					  		if(error){
+					  			callback(error,null);
+					  			return;
+					  		}
+					  		else{
+					  			callback(null, question);
+					  			return;
+					  		}
+						}
+					);
+				},
+				function finalCallback(error, results){
+					if(error){
+						apiCallback(new Error('Something went wrong. The Question collection might be in a corrupt state.'));
+						return;
+					}
+					else{
+						responseResult.modified = results;
+						apiCallback(null, responseResult);
+						return;
+					}
+				}
+			);			
+		}
 	};
+
 	waterfall([
 		function validateInputs(callback){
 			var levelNumber = Number.parseInt(inputLevelNumber);
@@ -230,7 +270,7 @@ var deleteQuestion = function(inputLevelNumber, apiCallback){
 				}
 			});
 		},
-		function findByLevelNumber(levelNumber, totalLevels, callback){
+		function deleteByLevelNumber(levelNumber, totalLevels, callback){
 			Question.findOneAndRemove({levelNumber: levelNumber}, function(error, result){
 				if(error){
 					callback(error);
@@ -244,23 +284,35 @@ var deleteQuestion = function(inputLevelNumber, apiCallback){
 				return;
 			});
 		},
-		function decrementSuccessiveLevels(deleted, totalLevels, callback){
-			//just return for now
+		function passToFinalizer(deleted, totalLevels, callback){
+
+			var finalResult = {
+				deletedLevel: deleted,
+				deletePendingIDs: null
+			};
 			if(deleted.levelNumber === totalLevels){
 				//if the last level got deleted - nothing to decrement.
-				callback(null, deleted);
+				finalResult.deletePendingIDs = [];
+				callback(null, finalResult);
 				return;
 			}
-			//else we have to decrement from deleted.levelNumber+1 to totalLevels
-			var questionsToDelete = Question
+			else{
+				Question
 				.find({ levelNumber: { $gt: deleted.levelNumber, $lte: totalLevels} })
 				.sort({ levelNumber: 1 })
-				.select({ _id: 1});
-
-			questionsToDelete.exec(decrementByID);
-
-			callback(null, deleted);
-			return;
+				.select({ _id: 1})
+				.exec(function(error,result){
+					if(error){
+						callback(error, null);
+						return;
+					}
+					else{
+						finalResult.deletePendingIDs = result;
+						callback(null, finalResult);
+						return;
+					}
+				});
+			}
 		}
 	],
 	function finalCallback(error, result){
@@ -268,12 +320,16 @@ var deleteQuestion = function(inputLevelNumber, apiCallback){
 			apiCallback(error, null);
 			return;
 		}
+		else{
+			decrementByID(result.deletePendingIDs, result.deletedLevel);
+		}
 	});
 };
 
 var readAllQuestions = function(apiCallback){
 	Question
 	.find({})
+	.select({ _id:1, levelNumber:1, name:1})
 	.sort({levelNumber:1})
 	.exec(function(error,result){
 		if(error){

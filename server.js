@@ -80,6 +80,10 @@ app.post('/api/questions', function(request, response){
 	});
 });
 
+app.post('/api/questions/:anything', function(request, response){
+	response.status(400).send('Unsupported method. Use UPDATE instead.');
+});
+
 app.delete('/api/questions', function(request, response){
 	response
 	.status(403)
