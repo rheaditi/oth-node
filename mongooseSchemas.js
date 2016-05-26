@@ -3,6 +3,7 @@
 var mongoose = require('mongoose');
 var waterfall = require('async/waterfall');
 var map = require('async/map');
+var _ = require('lodash');
 
 var validate = require('./utils/validation.js');
 /* Just to make it shorter =P */
@@ -329,7 +330,7 @@ var deleteQuestion = function(inputLevelNumber, apiCallback){
 var readAllQuestions = function(apiCallback){
 	Question
 	.find({})
-	.select({ _id:1, levelNumber:1, name:1})
+	// .select({ _id:1, levelNumber:1, name:1})
 	.sort({levelNumber:1})
 	.exec(function(error,result){
 		if(error){
@@ -363,6 +364,75 @@ var readQuestionByLevelNumber = function(levelNumber, apiCallback){
 	});
 };
 
+var editQuestionByLevelNumber = function(levelNumber, inputQuestion, apiCallback){
+	waterfall([
+		function validateInputs(callback){
+			levelNumber = Number.parseInt(levelNumber);
+			if(!(Number.isSafeInteger(levelNumber) && levelNumber>0)){
+				callback(new Error('Invalid \'levelNumber\'.'));
+				return;
+			}
+			else{
+				var questionUpdater = _.pick(inputQuestion, ['name', 'sourceHint', 'answers', 'imageURL']);
+				if(_.isEmpty(questionUpdater)){
+					callback(new Error('No valid fields in request.'));
+					return;
+				}
+				if( _.has(questionUpdater,'name') && validate.levelName(inputQuestion.name) != true ){
+					callback(new Error('Invalid \'name\'.'));
+					return;
+				}
+				if( _.has(questionUpdater,'sourceHint')){
+					questionUpdater.sourceHint = validate.stripHtml(questionUpdater.sourceHint);
+				}
+				if( _.has(questionUpdater,'answers')){
+					var answerArray = questionUpdater.answers.split(',');
+					answerArray = answerArray.filter(function(answer){
+						return answer.length > 0;
+					});
+					for(var i in answerArray){
+						answerArray[i] = answerArray[i].toLowerCase();
+					}
+					if(answerArray.length < 1 || answerArray.length > 30){
+						callback(new Error('There is something wrong with the answers field'));
+						return;
+					}
+					questionUpdater.answers = answerArray;
+				}
+				callback(null, levelNumber, questionUpdater);
+				return;
+			}
+		},
+		function performUpdate(levelNumber, questionUpdater, callback){
+			Question.findOneAndUpdate(
+				{ levelNumber: levelNumber },
+				{ $set: questionUpdater },
+				{ new: true },
+				function(error, result){
+					if(error){
+						callback(error, null);
+						return;
+					}
+					else{
+						callback(null, result);
+						return;
+					}
+				}
+			);
+		}
+	],
+	function finalCallback(error,result){
+		if(error){
+			apiCallback(error,null);
+			return;
+		}
+		else{
+			apiCallback(null,result);
+			return;
+		}
+	});
+};
+
 /* Exports */
 module.exports.Schema = {};
 module.exports.Schema.user = user;
@@ -374,6 +444,7 @@ module.exports.newQuestion = newQuestion;
 module.exports.deleteQuestion = deleteQuestion;
 module.exports.readAllQuestions = readAllQuestions;
 module.exports.readQuestionByLevelNumber = readQuestionByLevelNumber;
+module.exports.editQuestionByLevelNumber = editQuestionByLevelNumber;
 
 
 

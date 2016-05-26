@@ -45,6 +45,30 @@ var db = require('./mongooseSchemas.js');
 var validate = require('./utils/validation.js');
 
 /* Backend APIS */
+
+/* Question - CRUD */
+
+// CRUD - CREATE
+app.post('/api/questions', function(request, response){
+	db.newQuestion(request.body, function(error, question){
+		if(error){
+			// 400 Bad Request - The request was invalid or cannot be served.
+			response.status(400).send(error.message);
+		}
+		else{
+			// 201 Created - request fulfilled, resulting in the creation of a new resource.
+			response.status(201).json(question);
+		}		
+	});
+});
+
+app.post('/api/questions/:anything', function(request, response){
+	response
+	.status(400)
+	.send('Unsupported method. Trying to edit? Use PUT instead.');
+});
+
+// CRUD - READ
 app.get('/api/questions', function(request, response){
 	db.readAllQuestions(function(error,result){
 		if(error){
@@ -67,27 +91,29 @@ app.get('/api/questions/:levelNumber', function(request, response){
 	});
 });
 
-app.post('/api/questions', function(request, response){
-	db.newQuestion(request.body, function(error, question){
+//CRUD - UPDATE
+app.put('/api/questions', function(request, response){
+	response
+	.status(403)
+	.send('Server does not support updating all question resources at once. Sorry!');
+});
+
+app.put('/api/questions/:levelNumber', function(request, response){
+	db.editQuestionByLevelNumber(request.params.levelNumber, request.body, function(error, result){
 		if(error){
-			// 400 Bad Request - The request was invalid or cannot be served.
 			response.status(400).send(error.message);
 		}
 		else{
-			// 201 Created - request fulfilled, resulting in the creation of a new resource.
-			response.status(201).json(question);
-		}		
+			response.json(result);
+		}
 	});
 });
 
-app.post('/api/questions/:anything', function(request, response){
-	response.status(400).send('Unsupported method. Use UPDATE instead.');
-});
-
+//CRUD - DELETE
 app.delete('/api/questions', function(request, response){
 	response
 	.status(403)
-	.send('Server does not support deleting all question resources. Too risky, man!');
+	.send('Server does not support deleting all question resources at once. Too risky, man!');
 });
 
 app.delete('/api/questions/:levelNumber', function(request, response){
