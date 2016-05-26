@@ -204,7 +204,26 @@ var deleteQuestion = function(inputLevelNumber, apiCallback){
 				return;
 			}
 		},
-		function findByLevelNumber(levelNumber, callback){
+		function getTotalLevels(levelNumber, callback){
+			Question.count({},function(error,result){
+				if(error){
+					callback(new Error('Could not fetch total count of questions.'));
+					return;
+				}
+				else if(result === 0){
+					callback(new Error('Nothing to delete.'));
+					return;
+				}
+				else if(levelNumber > result){
+					callback(new Error('Question with given levelNumber('+levelNumber+') does not exist. There are currently only '+ result +' levels.'));
+					return;
+				}
+				else{
+					callback(null, levelNumber, totalLevels)
+				}
+			});
+		},
+		function findByLevelNumber(levelNumber, totalLevels, callback){
 			Question.findOneAndRemove({levelNumber: levelNumber}, function(error, result){
 				if(error){
 					callback(error);
@@ -217,6 +236,11 @@ var deleteQuestion = function(inputLevelNumber, apiCallback){
 				callback(null, result);
 				return;
 			});
+		},
+		function decrementSuccessiveLevels(deleted, totalLevels, callback){
+			//just return for now
+			callback(null, deleted);
+			return;
 		}
 	],
 	function finalCallback(error, result){
