@@ -79,6 +79,12 @@ var question = Schema({
 	}] 
 });
 
+/* Models */
+
+var User = Model('User', user);
+var Question = Model('Question', user);
+
+
 /* Schema Methods */
 
 user.methods.logDetails = function(){
@@ -87,8 +93,8 @@ user.methods.logDetails = function(){
 
 /* Helper Functions - Internal Use */
 
-var isUniqueQuestion = function(error, ){
-
+var isUniqueQuestion = function(question, callback){
+	Question.find({ name: question.name})
 };
 
 /* Helper Functions - Exported */
@@ -98,10 +104,6 @@ var newQuestion = function(inputQuestion) {
 
 };
 
-/* Models */
-
-var User = Model('User', user);
-var Question = Model('Question', user);
 
 /* Exports */
 module.exports.Schema = {};

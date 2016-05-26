@@ -1,0 +1,29 @@
+
+<html>
+	<head></head>
+	<body>
+		<form action="/api/question" method="POST">
+			<label for="name">
+				Level Name:<br/>
+				<input type="text" name="name" required="true" value="helloques">
+			</label>
+			<br /><br />
+			<label for="sourceHint">
+				Source Hint:<br/>
+				<input type="text" name="sourceHint" required="true" value="hellosrc">
+			</label>
+			<br /><br />
+			<label for="imageURL">
+				ImageURL:<br/>
+				<input type="text" name="imageURL" required="true" value="hellourl">
+			</label>
+			<br /><br />
+			<label for="answers">
+				List of Comma Separated Answers:<br/>
+				<input type="text" name="answers" required="true" value="hello1,hello2">
+			</label>
+			<br /><br />
+			<input type="submit" value="Create">
+		</form>
+	</body>
+</html>
