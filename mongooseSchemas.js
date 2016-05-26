@@ -82,7 +82,7 @@ var question = Schema({
 /* Models */
 
 var User = Model('User', user);
-var Question = Model('Question', user);
+var Question = Model('Question', question);
 
 
 /* Schema Methods */
@@ -93,15 +93,54 @@ user.methods.logDetails = function(){
 
 /* Helper Functions - Internal Use */
 
-var isUniqueQuestion = function(question, callback){
-	Question.find({ name: question.name})
-};
 
 /* Helper Functions - Exported */
 
 var newQuestion = function(inputQuestion) {
 	// validate question before creating a new object
-
+	waterfall([
+		function isUniqueQuestionName(callback){
+			var question = inputQuestion;
+			Question.findOne({name: question.name}, function(error, result){
+				if(error){
+					callback(new Error('Retreiving question by name: '+String(error)));
+					return;
+				}
+				else if(result){
+					callback(new Error('Question with given name ('+ result.name +') already exists.'));
+					return;
+				}
+				callback(null, question);
+				return;				
+			});
+		},
+		function isUniqueImageURL(question, callback){
+			Question.findOne({imageURL: question.imageURL}, function(error, result){
+				if(error){
+					callback(new Error('Retreiving question by imageURL: '+String(error)));
+					return;
+				}
+				else if(result){
+					callback(new Error('Question with given imageURL ('+ result +') already exists.'));
+					return;
+				}
+				callback(null, question);
+				return;				
+			});
+		},
+		function(question, callback){
+				
+			callback(null, question);
+		}
+	],
+	function finalCallback(error, result){
+		if(error){
+			throw error;			
+		}
+		console.log('After waterfall result:\n');
+		console.log(result);
+	}
+	);
 };
 
 
@@ -111,3 +150,5 @@ module.exports.Schema.user = user;
 
 module.exports.User = User;
 module.exports.Question = Question;
+
+module.exports.newQuestion = newQuestion;

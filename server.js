@@ -21,6 +21,10 @@ require('./config/localDbConnect.js');
 var db = require('./mongooseSchemas.js');
 var validate = require('./utils/validation.js');
 
+
+
+db.newQuestion({ name: 'hello', levelNumber: 3, sourceHint: 'source3', imageURL: 'image2', answers: ['answer31', 'answer32'] });
+
 app.post('/api/question', function(request, response){
 	console.log(request.body);
 	response.json(request.body);
