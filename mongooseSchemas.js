@@ -192,6 +192,12 @@ var newQuestion = function(inputQuestion, apiCallback) {
 };
 
 var deleteQuestion = function(inputLevelNumber, apiCallback){
+	var decrementByID = function(err,questionIDs){
+		console.log('got my IDS:\n\n');
+		console.log(questionIDs);
+		apiCallback(null, 'done');
+		return;
+	};
 	waterfall([
 		function validateInputs(callback){
 			var levelNumber = Number.parseInt(inputLevelNumber);
@@ -219,7 +225,8 @@ var deleteQuestion = function(inputLevelNumber, apiCallback){
 					return;
 				}
 				else{
-					callback(null, levelNumber, totalLevels)
+					callback(null, levelNumber, result);
+					return;
 				}
 			});
 		},
@@ -233,12 +240,25 @@ var deleteQuestion = function(inputLevelNumber, apiCallback){
 					callback(new Error('Question with given levelNumber('+levelNumber+') does not exist.'));
 					return;
 				}
-				callback(null, result);
+				callback(null, result, totalLevels);
 				return;
 			});
 		},
 		function decrementSuccessiveLevels(deleted, totalLevels, callback){
 			//just return for now
+			if(deleted.levelNumber === totalLevels){
+				//if the last level got deleted - nothing to decrement.
+				callback(null, deleted);
+				return;
+			}
+			//else we have to decrement from deleted.levelNumber+1 to totalLevels
+			var questionsToDelete = Question
+				.find({ levelNumber: { $gt: deleted.levelNumber, $lte: totalLevels} })
+				.sort({ levelNumber: 1 })
+				.select({ _id: 1});
+
+			questionsToDelete.exec(decrementByID);
+
 			callback(null, deleted);
 			return;
 		}
@@ -246,10 +266,6 @@ var deleteQuestion = function(inputLevelNumber, apiCallback){
 	function finalCallback(error, result){
 		if(error){
 			apiCallback(error, null);
-			return;
-		}
-		else{
-			apiCallback(null, result);
 			return;
 		}
 	});
