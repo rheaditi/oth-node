@@ -188,10 +188,48 @@ var newQuestion = function(inputQuestion, apiCallback) {
 		};
 		apiCallback(null, response);
 		return;
-	}
-	);
+	});
 };
 
+var deleteQuestion = function(inputLevelNumber, apiCallback){
+	waterfall([
+		function validateInputs(callback){
+			var levelNumber = Number.parseInt(inputLevelNumber);
+			if(Number.isSafeInteger(levelNumber) && levelNumber > 0){
+				callback(null, levelNumber);
+				return;
+			}
+			else{
+				callback(new Error('Invalid \'levelNumber\'.'));
+				return;
+			}
+		},
+		function findByLevelNumber(levelNumber, callback){
+			Question.findOneAndRemove({levelNumber: levelNumber}, function(error, result){
+				if(error){
+					callback(error);
+					return;
+				}
+				if(!result){
+					callback(new Error('Question with given levelNumber('+levelNumber+') does not exist.'));
+					return;
+				}
+				callback(null, result);
+				return;
+			});
+		}
+	],
+	function finalCallback(error, result){
+		if(error){
+			apiCallback(error, null);
+			return;
+		}
+		else{
+			apiCallback(null, result);
+			return;
+		}
+	});
+};
 
 /* Exports */
 module.exports.Schema = {};
@@ -201,3 +239,4 @@ module.exports.User = User;
 module.exports.Question = Question;
 
 module.exports.newQuestion = newQuestion;
+module.exports.deleteQuestion = deleteQuestion;

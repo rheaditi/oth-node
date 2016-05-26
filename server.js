@@ -63,7 +63,18 @@ app.delete('/api/questions', function(request, response){
 });
 
 app.delete('/api/questions/:levelNumber', function(request, response){
-	response.send("I think you're tring to delete question with level number = " + request.params.levelNumber);
+	// response.send("I think you're tring to delete question with level number = " + request.params.levelNumber);
+	db.deleteQuestion(request.params.levelNumber, function(error, result){
+		if(error){
+			console.log('error?');
+			response.status(400).send(error.message);
+		}
+		else{
+			console.log('got some result.');
+			console.log(result);
+			response.send(result);
+		}
+	});
 });
 
 /* Finally up server on specified port and listen for connections */
