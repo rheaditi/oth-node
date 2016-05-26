@@ -20,24 +20,24 @@ var urlencodedParser = bodyParser.urlencoded({ extended: true });
 
 /* Logging middleware express-winston setup */
 // Log HTTP Requests
-app.use(expressWinston.logger({
-  transports: [
-    new winston.transports.Console({
-      json: false,
-      colorize: true,
-      timestamp: true,
-      meta: false
-    }),
-    new winston.transports.File({
-    	timestamp: true,
-    	filename: './logs/winston.log',
-    	maxsize: 1024,
-    	zippedArchive: true
-    })
-  ]//,
-  // expressFormat: true, // Use the default Express/morgan request formatting, with the same colors. Enabling this will override any msg and colorStatus if true. Will only output colors on transports with colorize set to true
-  // colorStatus: true, // Color the status code, using the Express/morgan color palette (default green, 3XX cyan, 4XX yellow, 5XX red). Will not be recognized if expressFormat is true
-}));
+var logger = expressWinston.logger({
+	transports: [
+		new winston.transports.Console({
+			colorize: true,
+			timestamp: true
+		}),
+		new winston.transports.File({
+			colorize: false,
+			timestamp: true,
+			filename: './logs/winston.log',
+			maxsize: 1024,
+			zippedArchive: true
+		})
+	],
+	msg: '{{res.statusCode}} HTTP {{req.method}} {{res.responseTime}}ms {{req.url}}',
+	meta: false, // optional: control whether you want to log the meta data about the request (default to true)
+});
+app.use(logger);
 
 /* Custom Module Loading */
 require('./config/localDbConnect.js');
@@ -48,14 +48,23 @@ var validate = require('./utils/validation.js');
 app.post('/api/questions', function(request, response){
 	db.newQuestion(request.body, function(error, question){
 		if(error){
-			response.send(error.message);
+			// 400 Bad Request - The request was invalid or cannot be served.
+			response.status(400).send(error.message);
 		}
 		else{
-			response.send(question);
+			// 201 Created - request fulfilled, resulting in the creation of a new resource.
+			response.status(201).json(question);
 		}		
 	});
 });
 
+app.delete('/api/questions', function(request, response){
+	response.status(403).send('Server does not support deleting all question resources. Too risky, man!');
+});
+
+app.delete('/api/questions/:levelNumber', function(request, response){
+	response.send("I think you're tring to delete question with level number = " + request.params.levelNumber);
+});
 
 /* Finally up server on specified port and listen for connections */
 app.set('port', 3000);

@@ -175,9 +175,19 @@ var newQuestion = function(inputQuestion, apiCallback) {
 	function finalCallback(error, result){
 		if(error){
 			apiCallback(error, null);
+			return;
 		}
 		// We now should ideally have a clean & valid question object which has been inserted.
-		apiCallback(null, result);
+		// send back only the required non-sensitive data
+		var response = {
+			levelNumber: result.levelNumber,
+			name: result.name,
+			sourceHint: result.sourceHint,
+			imageURL: result.imageURL,
+			answers: '[(array of ' + result.answers.length + ' answers not dispayed)]'
+		};
+		apiCallback(null, response);
+		return;
 	}
 	);
 };
