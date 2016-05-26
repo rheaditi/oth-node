@@ -1,8 +1,8 @@
 'use strict';
 
 var mongoose = require('mongoose');
-var waterfall = require("async/waterfall");
-
+var waterfall = require('async/waterfall');
+var validate = require('./utils/validation.js');
 /* Just to make it shorter =P */
 var Schema = mongoose.Schema;
 var Model = mongoose.model.bind(mongoose);
@@ -97,11 +97,20 @@ user.methods.logDetails = function(){
 /* Helper Functions - Exported */
 
 var newQuestion = function(inputQuestion) {
-	// validate question before creating a new object
+	// validate question and then add the new question to database
 	waterfall([
-		function isUniqueQuestionName(callback){
+		function validateInputs(callback){
 			var question = inputQuestion;
-			Question.findOne({name: question.name}, function(error, result){
+			if(validate.levelName(inputQuestion.name) != true){
+				callback(new Error('Invalid level name. ' + validate.message.levelName));
+				return;
+			}
+			question.sourceHint = validate.stripHtml(question.sourceHint);
+			callback(null, question);
+			return;
+		},
+		function isUniqueQuestionName(question, callback){
+			Question.findOne({name: question.name}, 'name', function(error, result){
 				if(error){
 					callback(new Error('Retreiving question by name: '+String(error)));
 					return;
@@ -115,30 +124,64 @@ var newQuestion = function(inputQuestion) {
 			});
 		},
 		function isUniqueImageURL(question, callback){
-			Question.findOne({imageURL: question.imageURL}, function(error, result){
+			Question.findOne({imageURL: question.imageURL}, 'imageURL', function(error, result){
 				if(error){
 					callback(new Error('Retreiving question by imageURL: '+String(error)));
 					return;
 				}
 				else if(result){
-					callback(new Error('Question with given imageURL ('+ result +') already exists.'));
+					callback(new Error('Question with given imageURL ('+ result.imageURL +') already exists.'));
 					return;
 				}
 				callback(null, question);
 				return;				
 			});
 		},
-		function(question, callback){
-				
+		function answersToValidArray(question, callback){
+			var answerArray = question.answers.split(',');
+			answerArray = answerArray.filter(function(answer){
+				return answer.length > 0;
+			});
+			for(var i in answerArray){
+				answerArray[i] = answerArray[i].toLowerCase();
+			}
+			if(answerArray.length < 1 || answerArray.length > 30){
+				callback(new Error('There is something wrong with the list of answers for this question.'));
+				return;
+			}
+			question.answers = answerArray;
 			callback(null, question);
+		},
+		function getLevelNumber(question, callback){
+			Question.count({}, function(error, result){
+				if(error){
+					callback(error);
+					return;
+				}
+				question.levelNumber = result + 1;
+				callback(null, question);
+			});			
+		},
+		function addValidQuestionToDB(question, callback){
+			Question.create(question, function(error, result){
+				if(error){
+					callback(error);
+					return;
+				}
+				callback(null, result);
+			});
 		}
 	],
 	function finalCallback(error, result){
 		if(error){
 			throw error;			
 		}
-		console.log('After waterfall result:\n');
-		console.log(result);
+		// We now should ideally have a clean & valid question object which has been inserted.
+		if(result){
+			console.log('Successfully added a new question:\n');
+			console.log(result);
+			return result;
+		}
 	}
 	);
 };

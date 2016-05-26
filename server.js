@@ -23,7 +23,7 @@ var validate = require('./utils/validation.js');
 
 
 
-db.newQuestion({ name: 'hello', levelNumber: 3, sourceHint: 'source3', imageURL: 'image2', answers: ['answer31', 'answer32'] });
+db.newQuestion({ name: 'hello', levelNumber: 5, sourceHint: '<p>sour<!--ce-->3</p>', imageURL: 'image3', answers: 'ansWer21,,c,ABCDEF,answeR22,a,b,,,,,answer23' });
 
 app.post('/api/question', function(request, response){
 	console.log(request.body);

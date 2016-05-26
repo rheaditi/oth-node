@@ -29,11 +29,13 @@ validate.levelName = function(input){
 };
 
 validate.stripHtml = function(input){
+	input = input.replace(/(<!--)/ig,"");
+	input = input.replace(/(-->)/ig,"");
 	input = input.replace(expression.htmlTags,"");
 	return input;
 };
 
-
+validate.message = message;
 module.exports = validate;
 
 
