@@ -96,7 +96,7 @@ user.methods.logDetails = function(){
 
 /* Helper Functions - Exported */
 
-var newQuestion = function(inputQuestion) {
+var newQuestion = function(inputQuestion, apiCallback) {
 	// validate question and then add the new question to database
 	waterfall([
 		function validateInputs(callback){
@@ -174,14 +174,10 @@ var newQuestion = function(inputQuestion) {
 	],
 	function finalCallback(error, result){
 		if(error){
-			throw error;			
+			apiCallback(error, null);
 		}
 		// We now should ideally have a clean & valid question object which has been inserted.
-		if(result){
-			console.log('Successfully added a new question:\n');
-			console.log(result);
-			return result;
-		}
+		apiCallback(null, result);
 	}
 	);
 };

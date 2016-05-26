@@ -2,6 +2,8 @@
 
 var express = require('express');
 var bodyParser = require('body-parser');
+var winston = require('winston');
+var expressWinston = require('express-winston');
 
 var app = express();
 
@@ -16,18 +18,42 @@ app.use('/api', bodyParser.urlencoded({ extended: true })); // for parsing appli
 var jsonParser = bodyParser.json();
 var urlencodedParser = bodyParser.urlencoded({ extended: true });
 
+/* Logging middleware express-winston setup */
+// Log HTTP Requests
+app.use(expressWinston.logger({
+  transports: [
+    new winston.transports.Console({
+      json: false,
+      colorize: true,
+      timestamp: true,
+      meta: false
+    }),
+    new winston.transports.File({
+    	timestamp: true,
+    	filename: './logs/winston.log',
+    	maxsize: 1024,
+    	zippedArchive: true
+    })
+  ]//,
+  // expressFormat: true, // Use the default Express/morgan request formatting, with the same colors. Enabling this will override any msg and colorStatus if true. Will only output colors on transports with colorize set to true
+  // colorStatus: true, // Color the status code, using the Express/morgan color palette (default green, 3XX cyan, 4XX yellow, 5XX red). Will not be recognized if expressFormat is true
+}));
+
 /* Custom Module Loading */
 require('./config/localDbConnect.js');
 var db = require('./mongooseSchemas.js');
 var validate = require('./utils/validation.js');
 
-
-
-db.newQuestion({ name: 'hello', levelNumber: 5, sourceHint: '<p>sour<!--ce-->3</p>', imageURL: 'image3', answers: 'ansWer21,,c,ABCDEF,answeR22,a,b,,,,,answer23' });
-
-app.post('/api/question', function(request, response){
-	console.log(request.body);
-	response.json(request.body);
+/* Backend APIS */
+app.post('/api/questions', function(request, response){
+	db.newQuestion(request.body, function(error, question){
+		if(error){
+			response.send(error.message);
+		}
+		else{
+			response.send(question);
+		}		
+	});
 });
 
 
