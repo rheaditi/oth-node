@@ -1,0 +1,25 @@
+inserting questions
+
+{
+	"levelNumber" : 1,
+	"name" : "hello123",
+	"sourceHint" : "helloSource",
+	"imageURL" : "imagehello",
+	"answers" : [
+		"hello1",
+		"hello2"
+	]
+},
+{
+	"levelNumber" : 2,
+	"name" : "ques2",
+	"sourceHint" : "source2",
+	"imageURL" : "image2",
+	"answers" : [
+		"answer21",
+		"answer22"
+	]
+}
+
+mongodump  --db oth --collection questions
+mongorestore --collection questions --db oth dump/oth/questions.bson
